@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:tns="http://localhost:8000/soap"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  targetNamespace="http://localhost:8000/soap"
+                  name="ChatAuthService">
+
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://localhost:8000/soap" elementFormDefault="qualified">
+      
+      <xsd:element name="registrationRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="username" type="xsd:string"/>
+            <xsd:element name="password" type="xsd:string"/>
+            <xsd:element name="ip" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="registrationResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status" type="xsd:string"/>
+            <xsd:element name="message" type="xsd:string"/>
+            <xsd:element name="uid" type="xsd:int"/>
+            <xsd:element name="token" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="loginRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="username" type="xsd:string"/>
+            <xsd:element name="password" type="xsd:string"/>
+            <xsd:element name="ip" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="loginResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status" type="xsd:string"/>
+            <xsd:element name="username" type="xsd:string"/>
+            <xsd:element name="uid" type="xsd:int"/>
+            <xsd:element name="token" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+    </xsd:schema>
+  </wsdl:types>
+
+  <wsdl:message name="registrationRequestMessage">
+    <wsdl:part name="parameters" element="tns:registrationRequest"/>
+  </wsdl:message>
+  <wsdl:message name="registrationResponseMessage">
+    <wsdl:part name="parameters" element="tns:registrationResponse"/>
+  </wsdl:message>
+  <wsdl:message name="loginRequestMessage">
+    <wsdl:part name="parameters" element="tns:loginRequest"/>
+  </wsdl:message>
+  <wsdl:message name="loginResponseMessage">
+    <wsdl:part name="parameters" element="tns:loginResponse"/>
+  </wsdl:message>
+
+  <wsdl:portType name="AuthPortType">
+    <wsdl:operation name="registration">
+      <wsdl:input message="tns:registrationRequestMessage"/>
+      <wsdl:output message="tns:registrationResponseMessage"/>
+    </wsdl:operation>
+    <wsdl:operation name="login">
+      <wsdl:input message="tns:loginRequestMessage"/>
+      <wsdl:output message="tns:loginResponseMessage"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="AuthSoapBinding" type="tns:AuthPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    
+    <wsdl:operation name="registration">
+      <soap:operation soapAction="http://localhost:8000/soap/registration"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="login">
+      <soap:operation soapAction="http://localhost:8000/soap/login"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="AuthService">
+    <wsdl:port name="AuthPort" binding="tns:AuthSoapBinding">
+      <soap:address location="http://localhost:8000/soap"/>
+    </wsdl:port>
+  </wsdl:service>
+
+</wsdl:definitions>
