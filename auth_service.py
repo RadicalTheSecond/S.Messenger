@@ -1,41 +1,37 @@
 import hashlib
 import secrets
 
+class User:
+    def __init__(self, uid, username, password_hash, token):
+        self.uid = uid
+        self.username = username
+        self.password_hash = password_hash
+        self.token = token
+        
 class AuthService:
     def __init__(self, db):
         self.db = db
 
     async def register_user(self, username, password):
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        query = "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id;"
         try:
-            result = await self.db.execute_query(query, username, password_hash)
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            token = secrets.token_hex(16)
+            result = await self.db.execute_query(
+                "INSERT INTO users (username, password_hash, token) VALUES ($1, $2, $3) RETURNING id;", username, password_hash, token)
             if not result:
                 return False
-            user_id = result[0]['id']
-            token = secrets.token_hex(16)
-            update_query = "UPDATE users SET token = $1 WHERE id = $2;"
-            await self.db.execute_query(update_query, token, user_id)
-            return {"uid": user_id, "token": token, "username": username}
-            
+
+            return User(result[0]['id'], username, password_hash, token)
         except Exception as e:
             print(f"Ошибка при регистрации {username}: {e}")
             return False
 
     async def authentificate_user(self, username, password):
-        query = "SELECT id, password_hash, token FROM users WHERE username = $1;"
-        result = await self.db.execute_query(query, username)
-        
+        await self.db.execute_query("UPDATE users SET token = $1 WHERE username = $2;", secrets.token_hex(16), username)
+        result = await self.db.execute_query("SELECT id, password_hash, token FROM users WHERE username = $1;", username)
         if not result:
             return None
-            
-        stored_hash = result[0]['password_hash']
-        user_id = result[0]['id']
-        existing_token = result[0]['token']  
-        
-        input_hash = hashlib.sha256(password.encode()).hexdigest()
-        
-        if input_hash == stored_hash:
-            return {"uid": user_id, "token": existing_token}
-            
-        return None  
+        U = User(result[0]['id'], username, result[0]['password_hash'],  result[0]['token'])    
+        if hashlib.sha256(password.encode()).hexdigest() == U.password_hash:
+            return U
+        return None

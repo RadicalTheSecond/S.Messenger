@@ -9,47 +9,44 @@
   <wsdl:types>
     <xsd:schema targetNamespace="http://localhost:8000/soap" elementFormDefault="qualified">
       
-      <xsd:element name="registrationRequest">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="username" type="xsd:string"/>
-            <xsd:element name="password" type="xsd:string"/>
-            <xsd:element name="ip" type="xsd:string"/>
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:complexType name="registrationRequest">
+        <xsd:sequence>
+          <xsd:element name="username" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string"/>
+          <xsd:element name="ip" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
 
-      <xsd:element name="registrationResponse">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="status" type="xsd:string"/>
-            <xsd:element name="message" type="xsd:string"/>
-            <xsd:element name="uid" type="xsd:int"/>
-            <xsd:element name="token" type="xsd:string"/>
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:complexType name="registrationResponse">
+        <xsd:sequence>
+          <xsd:element name="status" type="xsd:string"/>
+          <xsd:element name="message" type="xsd:string"/>
+          <xsd:element name="uid" type="xsd:int"/>
+          <xsd:element name="token" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
 
-      <xsd:element name="loginRequest">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="username" type="xsd:string"/>
-            <xsd:element name="password" type="xsd:string"/>
-            <xsd:element name="ip" type="xsd:string"/>
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:complexType name="loginRequest">
+        <xsd:sequence>
+          <xsd:element name="username" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string"/>
+          <xsd:element name="ip" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
 
-      <xsd:element name="loginResponse">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element name="status" type="xsd:string"/>
-            <xsd:element name="username" type="xsd:string"/>
-            <xsd:element name="uid" type="xsd:int"/>
-            <xsd:element name="token" type="xsd:string"/>
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:complexType name="loginResponse">
+        <xsd:sequence>
+          <xsd:element name="status" type="xsd:string"/>
+          <xsd:element name="username" type="xsd:string"/>
+          <xsd:element name="uid" type="xsd:int"/>
+          <xsd:element name="token" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="registrationRequest" type="tns:registrationRequest"/>
+      <xsd:element name="registrationResponse" type="tns:registrationResponse"/>
+      <xsd:element name="loginRequest" type="tns:loginRequest"/>
+      <xsd:element name="loginResponse" type="tns:loginResponse"/>
 
     </xsd:schema>
   </wsdl:types>

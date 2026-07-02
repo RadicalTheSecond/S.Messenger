@@ -9,7 +9,7 @@ from soap_handler import SOAPHandler
 from chat_manager import ChatManager
 from websockets_handler import WebSocketsHandler
 
-DSN = "postgresql://postgres:qweasdzxc098@localhost:5432/MDB"
+dsn = "postgresql://postgres:qweasdzxc098@localhost:5432/MDB"
 
 async def handle_soap_request(request):
     soap_handler = request.app['soap_handler']
@@ -25,25 +25,22 @@ async def handle_soap_request(request):
 
     elif request.method == "POST":
         xml_data = await request.text()
-        
         if "registrationRequest" in xml_data:
             response_xml = await soap_handler.registration(xml_data)
         elif "loginRequest" in xml_data:
             response_xml = await soap_handler.login(xml_data)
         else:
-            response_xml = """<?xml version="1.0"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><soap:Fault><faultcode>Client</faultcode><faultstring>Unknown request</faultstring></soap:Fault></soap:Body></soap:Envelope>"""
+            response_xml = soap_handler._build_fault("Client", "Unknown request")
         
         return web.Response(text=response_xml, content_type="text/xml", charset="utf-8")
 
 
 async def main():
-    db = DatabaseManager(DSN)
+    db = DatabaseManager(dsn)
     await db.connect()
-
     auth_service = AuthService(db)
     security_gate = SecurityGate()
-    soap_handler = SOAPHandler(auth_service, security_gate)
-
+    soap_handler = SOAPHandler(auth_service, security_gate, "schema.wsdl")
     chat_manager = ChatManager(db)
     ws_handler = WebSocketsHandler(chat_manager)
 
@@ -56,12 +53,15 @@ async def main():
     await runner.setup()
     site = web.TCPSite(runner, 'localhost', 8000)
 
-    print("-> SOAP сервер запущен на http://localhost:8000/soap")
-    print("-> WebSocket сервер запущен на ws://localhost:8765")
+    print("-> SOAP запущен на http://localhost:8000/soap")
+    print("-> WebSocket запущен на ws://localhost:8765")
 
-    await site.start() 
-    async with websockets.serve(ws_handler.handle_connection, "localhost", 8765):
-        await asyncio.Future()
+    try:
+        await site.start()
+        async with websockets.serve(ws_handler.handle_connection, "localhost", 8765):
+            await asyncio.Future()
+    finally:
+        await db.disconnect()
 
 if __name__ == "__main__":
     try:
