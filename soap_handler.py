@@ -1,4 +1,4 @@
-import zeep
+from zeep.exceptions import ValidationError, Fault
 from zeep import Client
 from zeep.helpers import serialize_object
 from lxml import etree
@@ -14,16 +14,13 @@ class SOAPHandler:
 
     def _parse_request(self, xml, element_name):
         try:
-            xml_text = etree.fromstring(xml.encode('utf-8'))                
-            xsd = self.types.get_element(f"{{http://localhost:8000/soap}}{element_name}")            
-            parsed_obj = xsd.parse(xml_text.find(".//{http://schemas.xmlsoap.org/soap/envelope/}Body")[0], self.types)
-            params = serialize_object(parsed_obj)
+            envelope = etree.fromstring(xml.encode('utf-8'))
+            body = envelope.find(".//{http://schemas.xmlsoap.org/soap/envelope/}Body")
             
-            for field_name, element in xsd.type.elements:
-                if not element.is_optional and params.get(field_name) is None:
-                    raise ValueError(f"Missing required field: '{field_name}'")
-
-            return params.get("username"), params.get("password"), params.get("ip")
+            if body is None or len(body) == 0:
+                raise ValidationError("SOAP Body is empty or missing")
+            parsed_obj = self.types.get_element(f"{{http://localhost:8000/soap}}{element_name}").parse(body[0], self.types)
+            return parsed_obj
 
         except Exception as e:
             print(f"SOAP: {e}")
@@ -54,16 +51,14 @@ class SOAPHandler:
     
     async def registration(self, xml):
         try:
-            username, password, ip = self._parse_request(xml, "registrationRequest")
-            if not username or not password:
-                return self._build_fault("Client", "Wrong XML format")
+            req = self._parse_request(xml, "registrationRequest")
         except ValueError as e:
             return self._build_fault("Client", str(e))
 
-        if self.security_gate.is_blocked(ip):
+        if self.security_gate.is_blocked(req.ip):
             return self._build_fault("403", "Registration temporarily blocked for this IP")
 
-        Rdata = await self.auth_service.register_user(username, password)
+        Rdata = await self.auth_service.register_user(req.username, req.password)
         
         if Rdata:
             response_data = {
@@ -74,20 +69,20 @@ class SOAPHandler:
             }
             return self._build_response("registrationResponse", response_data)
         else:
-            self.security_gate.register_failed_attempt(ip)
+            self.security_gate.register_failed_attempt(req.ip)
             return self._build_fault("Client", "User already exists")
 
     async def login(self, xml):
         try:
-            username, password, ip = self._parse_request(xml, "loginRequest")
-            if not username or not password:
-                return self._build_fault("Client", "Wrong XML format")
+            req = self._parse_request(xml, "loginRequest")
+            print(req)
         except ValueError as e:
             return self._build_fault("Client", str(e))
-        if self.security_gate.is_blocked(ip):
+            
+        if self.security_gate.is_blocked(req.ip):
             return self._build_fault("403", "Access temporarily blocked for this IP")
             
-        Adata = await self.auth_service.authentificate_user(username, password)
+        Adata = await self.auth_service.authentificate_user(req.username, req.password)
         if Adata:
             response_data = {
                 "status": "success",
@@ -97,5 +92,5 @@ class SOAPHandler:
             }
             return self._build_response("loginResponse", response_data)
         else:
-            self.security_gate.register_failed_attempt(ip)
+            self.security_gate.register_failed_attempt(req.ip)
             return self._build_fault("Client", "Invalid username or password")
